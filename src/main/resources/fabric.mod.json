@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "animated_panorama",
+  "version": "${version}",
+  "name": "Animated Panorama",
+  "description": "Lets resource packs animate panorama_overlay.png on the title screen.",
+  "authors": ["nazarbatrider"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.nazarbatrider.animatedpanorama.AnimatedPanoramaClient"]
+  },
+  "mixins": ["animated_panorama.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
