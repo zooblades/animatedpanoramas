@@ -36,4 +36,4 @@ Animation length in seconds = frames / fps.
 - `mc1_21_11/` Minecraft 1.21.11
 - `mc1_21_1/` Minecraft 1.21.1 (Yarn mappings)
 
-Build one: `cd mc26 && gradle build` (Gradle 9.7.1, Java 25).
+Build one: `cd mc26 && gradle build` (Gradle 9.7.1, run on Java 25; `mc1_21_11` also needs Java 25 to run Loom but produces Java 21 bytecode).
