@@ -1,7 +1,16 @@
 # Animated Panorama
 Fabric 1.21.1 client mod by **nazarbatrider**. Lets a resource pack animate `panorama_overlay.png` on the title screen.
 
-## Resource pack layout
+## Easiest way: a GIF
+Put one file in your pack:
+```
+assets/minecraft/textures/gui/title/background/panorama_overlay.gif
+```
+Frame timing comes from the GIF itself. Transparency is supported. To force a fixed speed, add `panorama_overlay_animation.json` with `{ "fps": 12 }`.
+Limit: width x height x frames must stay under ~64 million pixels (e.g. 1920x1080 up to ~30 frames, 960x540 up to ~120). If the GIF is too big it is skipped and the log says so.
+If both a GIF and PNG frames exist, the GIF is used.
+
+## Alternative: PNG frames
 ```
 MyPack/
 ├─ pack.mcmeta                      (pack_format 34 for 1.21.1)
