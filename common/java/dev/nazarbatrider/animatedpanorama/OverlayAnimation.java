@@ -119,7 +119,7 @@ public class OverlayAnimation implements ResourceManagerReloadListener {
     private static Frame[] loadStrip(ResourceManager manager, Config cfg, double fps, TextureManager tm) {
         var res = manager.getResource(OVERLAY_PNG);
         if (res.isEmpty()) return new Frame[0];
-        try (InputStream in = res.get().open(); NativeImage src = NativeImage.read(NativeImage.Format.RGBA, in)) {
+        try (InputStream in = res.get().open(); NativeImage src = NativeImage.read(in)) {
             int w = src.getWidth(), h = src.getHeight();
             int count = cfg.frames() != null ? cfg.frames() : h / Math.max(1, cfg.frameHeight());
             if (count < 2) {
