@@ -35,6 +35,7 @@ public class OverlayAnimation implements SimpleSynchronousResourceReloadListener
     private static final String DIR = "textures/gui/title/background/";
     private static final Identifier CONFIG = Identifier.ofVanilla(DIR + "panorama_overlay_animation.json");
     private static final Identifier GIF = Identifier.ofVanilla(DIR + "panorama_overlay.gif");
+    private static final Identifier OVERLAY_PNG = Identifier.ofVanilla(DIR + "panorama_overlay.png");
     private static final int MAX_FRAMES = 2048;
     private static final long MAX_PIXELS = 64L * 1024 * 1024; // ~256 MB of RGBA
 
@@ -57,7 +58,8 @@ public class OverlayAnimation implements SimpleSynchronousResourceReloadListener
         frames = new Frame[0];
         totalMs = 0;
 
-        Double cfgFps = readFps(manager);
+        Config cfg = readConfig(manager);
+        Double cfgFps = cfg.fps();
 
         Frame[] result = null;
         var gif = manager.getResource(GIF);
@@ -70,7 +72,13 @@ public class OverlayAnimation implements SimpleSynchronousResourceReloadListener
                 dynamicTextures.clear();
             }
         }
-        if (result == null) result = loadPngFrames(manager, cfgFps != null ? cfgFps : 10.0);
+        if (result == null) {
+            double fps = cfgFps != null ? cfgFps : 10.0;
+            result = loadPngFrames(manager, fps);
+            if (result.length < 2 && (cfg.frames() != null || cfg.frameHeight() != null)) {
+                result = loadStrip(manager, cfg, fps, tm);
+            }
+        }
 
         if (result.length > 1) {
             long total = 0;
@@ -81,17 +89,21 @@ public class OverlayAnimation implements SimpleSynchronousResourceReloadListener
         LOGGER.info("Panorama overlay animation: {} frame(s), {} ms loop", result.length, totalMs);
     }
 
-    private static Double readFps(ResourceManager manager) {
+    private record Config(Double fps, Integer frames, Integer frameHeight) {}
+
+    private static Config readConfig(ResourceManager manager) {
         var cfg = manager.getResource(CONFIG);
-        if (cfg.isEmpty()) return null;
+        if (cfg.isEmpty()) return new Config(null, null, null);
         try (BufferedReader r = cfg.get().getReader()) {
             JsonObject o = JsonParser.parseReader(r).getAsJsonObject();
-            JsonElement f = o.get("fps");
-            if (f != null) return Math.max(0.1, Math.min(120.0, f.getAsDouble()));
+            Double fps = o.has("fps") ? Math.max(0.1, Math.min(120.0, o.get("fps").getAsDouble())) : null;
+            Integer frames = o.has("frames") ? o.get("frames").getAsInt() : null;
+            Integer frameHeight = o.has("frame_height") ? o.get("frame_height").getAsInt() : null;
+            return new Config(fps, frames, frameHeight);
         } catch (Exception e) {
             LOGGER.warn("Could not read {}: {}", CONFIG, e.toString());
+            return new Config(null, null, null);
         }
-        return null;
     }
 
     private static Frame[] loadPngFrames(ResourceManager manager, double fps) {
@@ -103,6 +115,51 @@ public class OverlayAnimation implements SimpleSynchronousResourceReloadListener
             found.add(new Frame(id, duration));
         }
         return found.toArray(new Frame[0]);
+    }
+
+    /** panorama_overlay.png as a vertical strip: frames stacked top to bottom. */
+    private static Frame[] loadStrip(ResourceManager manager, Config cfg, double fps, TextureManager tm) {
+        var res = manager.getResource(OVERLAY_PNG);
+        if (res.isEmpty()) return new Frame[0];
+        try (InputStream in = res.get().getInputStream(); NativeImage src = NativeImage.read(NativeImage.Format.RGBA, in)) {
+            int w = src.getWidth(), h = src.getHeight();
+            int count = cfg.frames() != null ? cfg.frames() : h / Math.max(1, cfg.frameHeight());
+            if (count < 2) {
+                LOGGER.warn("panorama_overlay.png strip needs at least 2 frames (image is {}x{})", w, h);
+                return new Frame[0];
+            }
+            int fh = h / count;
+            if (fh < 1) throw new IllegalStateException("More frames than image rows (" + count + " frames, height " + h + ")");
+            if (h % count != 0) {
+                LOGGER.warn("panorama_overlay.png height {} is not divisible by {} frames; the last {} row(s) are ignored",
+                        h, count, h - fh * count);
+            }
+            if (count > MAX_FRAMES || (long) w * fh * count > MAX_PIXELS) {
+                throw new IllegalStateException("Strip too large (" + w + "x" + fh + ", " + count + " frames).");
+            }
+
+            int ms = Math.max(1, (int) Math.round(1000.0 / fps));
+            Frame[] out = new Frame[count];
+            for (int i = 0; i < count; i++) {
+                NativeImage frame = new NativeImage(NativeImage.Format.RGBA, w, fh, false);
+                int offset = i * fh;
+                for (int y = 0; y < fh; y++) {
+                    for (int x = 0; x < w; x++) {
+                        frame.setColor(x, y, src.getColor(x, offset + y)); // raw ABGR copy
+                    }
+                }
+                Identifier id = Identifier.of("animated_panorama", "strip/frame_" + i);
+                tm.registerTexture(id, new NativeImageBackedTexture(frame));
+                dynamicTextures.add(id);
+                out[i] = new Frame(id, ms);
+            }
+            return out;
+        } catch (Throwable e) {
+            LOGGER.error("Failed to split panorama_overlay.png into frames", e);
+            for (Identifier id : dynamicTextures) tm.destroyTexture(id);
+            dynamicTextures.clear();
+            return new Frame[0];
+        }
     }
 
     private static Frame[] loadGif(Resource res, Double cfgFps, TextureManager tm) throws Exception {

@@ -21,6 +21,21 @@ Frame timing comes from the GIF. Transparency is supported. To force a fixed spe
 Size limit: width x height x frames <= ~64 million pixels (1920x1080 up to ~30 frames, 960x540 up to ~120).
 A GIF that is too large is skipped and the reason is written to `latest.log`.
 
+## Resource pack: one PNG with frames stacked vertically
+Use the normal overlay file and tell the mod how many frames it contains:
+```
+assets/minecraft/textures/gui/title/background/
+  panorama_overlay.png                    (frames stacked top to bottom, all the same height)
+  panorama_overlay_animation.json
+```
+```json
+{ "frames": 20, "fps": 12 }
+```
+- `frames`: number of frames. Or give `frame_height` (in pixels) instead and the mod counts the frames itself.
+- Without `frames` / `frame_height` the PNG is treated as a normal static overlay.
+- Image height should divide evenly by the frame count (leftover rows are ignored, with a warning in the log).
+- Priority: GIF, then `panorama_overlay_0.png ...` frames, then the vertical strip.
+
 ## Resource pack: PNG frames
 ```
 MyPack/assets/minecraft/textures/gui/title/background/
