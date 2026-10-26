@@ -4,12 +4,13 @@ Fabric client mod by **nazarbatrider**. Lets a resource pack animate the title s
 ## Which jar for which Minecraft version
 | Minecraft | Jar | Java |
 |---|---|---|
-| 26.1, 26.2, 26.3 | `animated-panorama-<ver>+mc26.1-26.3.jar` (one jar for all three) | 25 |
+| 26.1, 26.2, 26.3 (one jar) | `animated-panorama-<ver>+mc26.1-26.3.jar` | 25 |
 | 1.21.11 | `animated-panorama-<ver>+mc1.21.11.jar` | 21 |
-| 1.21.1 | `animated-panorama-mc1.21.1-<ver>.jar` | 21 |
+| 1.21.2 - 1.21.10 (one jar) | `animated-panorama-<ver>+mc1.21.2-1.21.10.jar` | 21 |
+| 1.21, 1.21.1 (one jar) | `animated-panorama-mc1.21.1-<ver>.jar` | 21 |
 
 Requires Fabric Loader and Fabric API. Jars are built by GitHub Actions (Actions tab → latest run → Artifacts).
-1.21.11 and 26.x cannot share a jar: 26.x is unobfuscated and needs Java 25.
+Jars are split where Minecraft or Fabric API changed in a way one jar cannot cover: 26.x is unobfuscated and needs Java 25; 1.21.11 removed the old Fabric resource reload API; 1.21.1 -> 1.21.2 changed how the overlay is drawn.
 
 ## Resource pack: GIF (easiest)
 ```
@@ -49,6 +50,8 @@ Animation length in seconds = frames / fps.
 - `common/` shared overlay code (Mojang names) used by `mc1_21_11` and `mc26`
 - `mc26/` Minecraft 26.1 - 26.3
 - `mc1_21_11/` Minecraft 1.21.11
+- `mc1_21_2/` Minecraft 1.21.2 - 1.21.10
+- `common_modern/` texture helper for 1.21.11 and 26.x
 - `mc1_21_1/` Minecraft 1.21.1 (Yarn mappings)
 
 Build one: `cd mc26 && gradle build` (Gradle 9.7.1, run on Java 25; `mc1_21_11` also needs Java 25 to run Loom but produces Java 21 bytecode).

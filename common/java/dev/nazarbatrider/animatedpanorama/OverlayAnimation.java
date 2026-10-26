@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
@@ -148,7 +147,7 @@ public class OverlayAnimation implements ResourceManagerReloadListener {
                 }
                 Identifier id = Identifier.fromNamespaceAndPath("animated_panorama", "strip/frame_" + i);
                 final int frameIndex = i;
-                tm.register(id, new DynamicTexture(() -> "animated_panorama strip frame " + frameIndex, frame));
+                tm.register(id, TextureFactory.create("animated_panorama strip frame " + frameIndex, frame));
                 dynamicTextures.add(id);
                 out[i] = new Frame(id, ms);
             }
@@ -215,7 +214,7 @@ public class OverlayAnimation implements ResourceManagerReloadListener {
 
                     Identifier id = Identifier.fromNamespaceAndPath("animated_panorama", "gif/frame_" + i);
                     final int frameIndex = i;
-                    tm.register(id, new DynamicTexture(() -> "animated_panorama gif frame " + frameIndex, toNative(canvas)));
+                    tm.register(id, TextureFactory.create("animated_panorama gif frame " + frameIndex, toNative(canvas)));
                     dynamicTextures.add(id);
 
                     int ms = cfgFps != null ? (int) Math.round(1000.0 / cfgFps)
